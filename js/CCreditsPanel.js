@@ -46,7 +46,7 @@ function CCreditsPanel(){
                     iTextX-iWidth/2, iTextY-iHeight/2, iWidth, iHeight, 
                     40, "center", PRIMARY_FONT_COLOUR, PRIMARY_FONT, 1.3,
                     2, 2,
-                    "www.codethislab.com",
+                    "www.stickylabs.xyz",
                     true, true, true,
                     false );
 
@@ -79,7 +79,7 @@ function CCreditsPanel(){
     };
     
     this._onLogoButRelease = function(){
-        window.open("https://www.codethislab.com/","_blank");
+        window.open("https://www.stickylabs.xyz/","_blank");
     };
     
     this._init();
