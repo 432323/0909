@@ -24,6 +24,9 @@ function CMenu() {
         _oButPlay = new CGfxButton((CANVAS_WIDTH / 2), CANVAS_HEIGHT - 300, oSprite, s_oStage);
         _oButPlay.addEventListener(ON_MOUSE_UP, this._onButPlayRelease, this);
 
+        // Expose _oButPlay globally
+        window._oButPlay = _oButPlay;
+
         // Initially hide the play button
         _oButPlay.setVisible(false);
      

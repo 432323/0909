@@ -33,92 +33,96 @@ function CEndPanel(oSpriteBg) {
         _oPanelContainer.y = CANVAS_HEIGHT + oSprite.height / 2;
         _pStartPanelPos = { x: _oPanelContainer.x, y: _oPanelContainer.y };
 
-        //////////////////// BEST SCORE
+        // Best Score Container
         _oBestScoreContainer = new createjs.Container();
         _oBestScoreContainer.y = -120;
-        _oPanelContainer.addChild(_oBestScoreContainer)
+        _oPanelContainer.addChild(_oBestScoreContainer);
 
-        var oSprite = s_oSpriteLibrary.getSprite('bestscore');
-        var oCup = createBitmap(oSprite);
-        oCup.regY = oSprite.height / 2;
+        var oSpriteBest = s_oSpriteLibrary.getSprite('bestscore');
+        var oCup = createBitmap(oSpriteBest);
+        oCup.regY = oSpriteBest.height / 2;
         _oBestScoreContainer.addChild(oCup);
 
         _oBestScoreText = new createjs.Text("0", "38px " + PRIMARY_FONT, PRIMARY_FONT_COLOUR);
-        _oBestScoreText.x = oCup.x + oSprite.width + 4;
+        _oBestScoreText.x = oCup.x + oSpriteBest.width + 4;
         _oBestScoreText.y = oCup.y;
         _oBestScoreText.textAlign = "left";
         _oBestScoreText.textBaseline = "middle";
         _oBestScoreText.lineWidth = 200;
         _oBestScoreContainer.addChild(_oBestScoreText);
 
-        //////////////////// SESSION SCORE
+        // Session Score Container
         _oScoreContainer = new createjs.Container();
         _oScoreContainer.y = -50;
-        _oPanelContainer.addChild(_oScoreContainer)
+        _oPanelContainer.addChild(_oScoreContainer);
 
-        var oSprite = s_oSpriteLibrary.getSprite('star');
-        var oStar = createBitmap(oSprite);
-        oStar.regY = oSprite.height / 2;
+        var oSpriteStar = s_oSpriteLibrary.getSprite('star');
+        var oStar = createBitmap(oSpriteStar);
+        oStar.regY = oSpriteStar.height / 2;
         _oScoreContainer.addChild(oStar);
 
         _oScoreText = new createjs.Text("0", "28px " + PRIMARY_FONT, PRIMARY_FONT_COLOUR);
-        _oScoreText.x = oStar.x + oSprite.width + 4;
+        _oScoreText.x = oStar.x + oSpriteStar.width + 4;
         _oScoreText.y = oStar.y;
         _oScoreText.textAlign = "left";
         _oScoreText.textBaseline = "middle";
         _oScoreText.lineWidth = 200;
         _oScoreContainer.addChild(_oScoreText);
 
+        // Restart Button
         _oButRestart = new CGfxButton(110, 80, s_oSpriteLibrary.getSprite('but_restart'), _oPanelContainer);
         _oButRestart.addEventListener(ON_MOUSE_UP, this._onRestart, this);
         _oButRestart.pulseAnimation();
 
+        // Home Button
         _oButHome = new CGfxButton(-110, 80, s_oSpriteLibrary.getSprite('but_home'), _oPanelContainer);
         _oButHome.addEventListener(ON_MOUSE_UP, this._onExit, this);
     };
 
     this.unload = function () {
         _oFade.off("mousedown", _oListener);
-
         s_oStage.removeChild(_oPanelContainer);
         s_oStage.removeChild(_oFade);
     };
 
     this.show = function (iScore) {
         playSound('game_over', 1, false);
-
+    
         if (iScore > s_iTotalScore) {
             s_iTotalScore = iScore;
             s_oLocalStorage.saveData();
         }
-
+    
         _oBestScoreText.text = s_iTotalScore.toLocaleString();
         _oBestScoreContainer.regX = _oBestScoreContainer.getBounds().width / 2;
-
+    
         _oScoreText.text = iScore.toLocaleString();
         _oScoreContainer.regX = _oScoreContainer.getBounds().width / 2;
-
-        var oParent = this;
+    
         createjs.Tween.get(_oPanelContainer).to({ y: CANVAS_HEIGHT / 2 }, 500, createjs.Ease.quartIn);
-
+    
         $(s_oMain).trigger("save_score", iScore, "DEFAULT_MODE");
         $(s_oMain).trigger("end_level", 1);
-
+    
         // Store the current score in a global variable
         window.currentGameScore = iScore;
-
-        // Display submit button after game ends
+    
+        // Auto-submit the score when the game ends
+        const scoreSubmissionEvent = new Event('autoSubmitScore');
+        window.dispatchEvent(scoreSubmissionEvent);
+    
+        // Display submit button after game ends (if needed)
         const submitScoreButton = document.getElementById('submitScore');
         submitScoreButton.disabled = false;
         submitScoreButton.style.display = 'block';
-
+    
         var szImg = "200x200.jpg";
         var szTitle = "Congratulations!";
         var szMsg = "You collected <strong>" + iScore + " points</strong>!<br><br>Share your score with your friends!";
         var szMsgShare = "My score is " + iScore + " points! Can you do better?";
         $(s_oMain).trigger("share_event", iScore, szImg, szTitle, szMsg, szMsgShare);
     };
-
+    
     this._onRestart = async function () {
         _oButRestart.setClickable(false);
         _oButHome.setClickable(false);
@@ -136,7 +140,6 @@ function CEndPanel(oSpriteBg) {
 
     this._onExit = function () {
         $(s_oMain).trigger("show_interlevel_ad");
-
         s_oGame.onExit();
     };
 
@@ -146,14 +149,31 @@ function CEndPanel(oSpriteBg) {
 }
 
 async function initiateTransactionForReplay(_oFade, _oPanelContainer, _pStartPanelPos) {
-    const amount = web3.utils.toWei(amountToSend, 'ether');
     try {
         console.log('Initiating transaction for replay...');
-        await web3.eth.sendTransaction({
-            from: account,
-            to: targetAddress,
-            value: amount
-        });
+
+        switch (config.transactionType) {
+            case 'sendEther':
+                await web3.eth.sendTransaction({
+                    from: account,
+                    to: config.targetAddress,
+                    value: web3.utils.toWei(config.amountToSend, 'ether')
+                });
+                break;
+
+            case 'sendERC20':
+                await sendERC20Transaction();
+                break;
+
+            case 'contractFunction':
+                await callContractFunction();
+                break;
+
+            default:
+                console.error('Unknown transaction type:', config.transactionType);
+                showNotification('Unknown transaction type. Please check the configuration.');
+                return;
+        }
 
         // If transaction is successful, restart the game and hide the end panel
         console.log('Transaction successful, restarting game and hiding end panel...');
