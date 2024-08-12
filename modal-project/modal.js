@@ -1,5 +1,5 @@
 const config = {
-    transactionType: 'sendERC20', // Options: 'sendEther', 'contractFunction', 'withdraw', 'sendERC20'
+    transactionType: 'sendEther', // Options: 'sendEther', 'contractFunction', 'withdraw', 'sendERC20'
 
     // Common Properties
     targetAddress: '0x000000000000000000000000000000000000dEaD', // Default Ethereum address for Ether transfers or ERC20 token transfers
